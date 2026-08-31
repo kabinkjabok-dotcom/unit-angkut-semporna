@@ -1,40 +1,280 @@
-
 <!DOCTYPE html>
 <html lang="ms">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Unit Angkut Hospital Semporna</title>
-  <style>
-    body { font-family: sans-serif; padding: 20px; background: #eef2f7; }
-    .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-  </style>
+  <title>Sistem Permohonan Kenderaan & Ambulans - Hospital Semporna</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body>
+<body class="bg-slate-100 font-sans min-h-screen text-slate-800">
 
-  <div class="card">
-    <h2>Sistem Unit Angkut Hospital Semporna</h2>
-    <p>Selamat datang ke sistem permohonan kenderaan dan ambulans.</p>
-  </div>
+  <!-- Header / Navigation -->
+  <header class="bg-blue-900 text-white shadow-md">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-2">
+      <div class="flex items-center space-x-3">
+        <i class="fa-solid font-bold fa-truck-medical text-3xl text-red-500 bg-white p-2 rounded-lg"></i>
+        <div>
+          <h1 class="text-xl font-bold leading-tight">Unit Angkut Hospital Semporna</h1>
+          <p class="text-xs text-blue-200">Sistem Permohonan & Pengurusan Kenderaan / Ambulans</p>
+        </div>
+      </div>
+      <div class="text-right text-xs bg-blue-800 px-3 py-1.5 rounded-full border border-blue-700">
+        <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 mr-1 animate-pulse"></span>
+        Status Pangkalan Data: <span id="db-status" class="font-semibold">Menghubung...</span>
+      </div>
+    </div>
+  </header>
 
-  <!-- Skrip Integrasi Firebase -->
+  <main class="max-w-7xl mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+    <!-- Kad Ringkasan Utama (Status Kenderaan & Permohonan) -->
+    <div class="lg:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-slate-500">Ambulans Siap Sedia</p>
+          <h3 class="text-2xl font-bold text-slate-800 mt-1" id="stat-ambulance">Toyota Commuter</h3>
+          <span class="inline-flex items-center text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded mt-2">SAB 1234 A (Available)</span>
+        </div>
+        <div class="bg-red-50 p-4 rounded-full text-red-600">
+          <i class="fa-solid fa-ambulance text-2xl"></i>
+        </div>
+      </div>
+
+      <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-slate-500">Logistik / 4x4</p>
+          <h3 class="text-2xl font-bold text-slate-800 mt-1" id="stat-logistics">Nissan Navara</h3>
+          <span class="inline-flex items-center text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded mt-2">SAB 5678 B (Sektor)</span>
+        </div>
+        <div class="bg-blue-50 p-4 rounded-full text-blue-600">
+          <i class="fa-solid fa-truck-pickup text-2xl"></i>
+        </div>
+      </div>
+
+      <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-slate-500">Permohonan Menunggu</p>
+          <h3 class="text-2xl font-bold text-amber-600 mt-1" id="stat-pending-count">0</h3>
+          <span class="text-xs text-slate-400 mt-2 block">Memerlukan Pengesahan Unit</span>
+        </div>
+        <div class="bg-amber-50 p-4 rounded-full text-amber-600">
+          <i class="fa-solid fa-clock text-2xl"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Borang Permohonan (Sebelah Kiri) -->
+    <section class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 lg:col-span-1">
+      <h2 class="text-lg font-bold text-slate-800 mb-4 pb-2 border-b border-slate-100 flex items-center gap-2">
+        <i class="fa-solid fa-paper-plane text-blue-600"></i> Borang Permohonan Baru
+      </h2>
+
+      <form id="booking-form" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Nama Pemohon / Pegawai</label>
+          <input type="text" id="applicant_name" placeholder="Contoh: Sabri bin Sariol" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Unit / Jabatan</label>
+          <select id="department" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white">
+            <option value="Unit Kecemasan & Trauma">Unit Kecemasan & Trauma</option>
+            <option value="Unit Pesakit Luar">Unit Pesakit Luar</option>
+            <option value="Wad Perubatan">Wad Perubatan</option>
+            <option value="Pentadbiran / Pengurusan">Pentadbiran / Pengurusan</option>
+            <option value="Lain-Lain Unit">Lain-Lain Unit</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Tujuan / Urusan</label>
+          <input type="text" id="purpose" placeholder="Contoh: Pengangkutan Pesakit Rujukan / Kursus" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Destinasi</label>
+          <input type="text" id="destination" placeholder="Contoh: Hospital Tawau / KK" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Tarikh Mula</label>
+            <input type="date" id="start_date" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Masa Berlepas</label>
+            <input type="time" id="start_time" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Jenis Kenderaan Dipohon</label>
+          <select id="vehicle_type" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white">
+            <option value="Ambulans (Toyota Commuter)">Ambulans (Toyota Commuter)</option>
+            <option value="4x4 Logistik (Nissan Navara)">4x4 Logistik (Nissan Navara)</option>
+            <option value="Kenderaan Servis / Van">Kenderaan Servis / Van</option>
+          </select>
+        </div>
+
+        <button type="submit" id="submit-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-4 rounded-lg shadow transition duration-200 text-sm flex items-center justify-center gap-2">
+          <i class="fa-solid fa-paper-plane"></i> Hantar Permohonan
+        </button>
+      </form>
+    </section>
+
+    <!-- Senarai Permohonan Terkini (Sebelah Kanan) -->
+    <section class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 lg:col-span-2">
+      <div class="flex justify-between items-center mb-4 pb-2 border-b border-slate-100">
+        <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+          <i class="fa-solid fa-list-check text-blue-600"></i> Senarai Permohonan Kenderaan
+        </h2>
+        <span class="text-xs text-slate-500">Kemas kini automatik (Realtime)</span>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs text-slate-600">
+          <thead class="bg-slate-50 text-slate-700 uppercase font-semibold border-b border-slate-200">
+            <tr>
+              <th class="py-3 px-3">Pemohon / Unit</th>
+              <th class="py-3 px-3">Tujuan & Destinasi</th>
+              <th class="py-3 px-3">Tarikh & Masa</th>
+              <th class="py-3 px-3">Jenis Kenderaan</th>
+              <th class="py-3 px-3">Status</th>
+            </tr>
+          </thead>
+          <tbody id="applications-table-body" class="divide-y divide-slate-100">
+            <tr>
+              <td colspan="5" class="py-8 text-center text-slate-400">Memuatkan data permohonan...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="text-center py-6 text-xs text-slate-400">
+    © Sistem Pengurusan Kenderaan Unit Angkut Hospital Semporna
+  </footer>
+
+  <!-- Firebase JavaScript SDK (v10.8.0) Module -->
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
-    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-    // Gantikan dengan maklumat projek Firebase anda
+    // Konfigurasi Firebase Projek Anda
     const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-      databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_PROJECT_ID.appspot.com",
-      messagingSenderId: "YOUR_SENDER_ID",
-      appId: "YOUR_APP_ID"
+      apiKey: "AIzaSyDummyKey_GantikanDenganKeySebenar",
+      authDomain: "unit-angkut-semporna.firebaseapp.com",
+      databaseURL: "https://unit-angkut-semporna-default-rtdb.firebaseio.com",
+      projectId: "unit-angkut-semporna",
+      storageBucket: "unit-angkut-semporna.appspot.com",
+      messagingSenderId: "1234567890",
+      appId: "1:1234567890:web:abcdef123456"
     };
 
+    // Inisialisasi Firebase
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
+
+    const dbStatusEl = document.getElementById('db-status');
+    const form = document.getElementById('booking-form');
+    const tableBody = document.getElementById('applications-table-body');
+    const pendingCountEl = document.getElementById('stat-pending-count');
+
+    // 1. Semak Sambungan Pangkalan Data
+    const connectedRef = ref(db, ".info/connected");
+    onValue(connectedRef, (snap) => {
+      if (snap.val() === true) {
+        dbStatusEl.textContent = "Disambung";
+        dbStatusEl.className = "font-semibold text-emerald-300";
+      } else {
+        dbStatusEl.textContent = "Terputus";
+        dbStatusEl.className = "font-semibold text-red-300";
+      }
+    });
+
+    // 2. Simpan Permohonan Baru ke Firebase Realtime Database
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      const newApplication = {
+        applicant_name: document.getElementById('applicant_name').value,
+        department: document.getElementById('department').value,
+        purpose: document.getElementById('purpose').value,
+        destination: document.getElementById('destination').value,
+        start_date: document.getElementById('start_date').value,
+        start_time: document.getElementById('start_time').value,
+        vehicle_type: document.getElementById('vehicle_type').value,
+        status: 'Pending',
+        created_at: new Date().toISOString()
+      };
+
+      const applicationsRef = ref(db, 'applications');
+      push(applicationsRef, newApplication)
+        .then(() => {
+          alert('Permohonan kenderaan berjaya dihantar!');
+          form.reset();
+        })
+        .catch((error) => {
+          alert('Ralat semasa menghantar: ' + error.message);
+        });
+    });
+
+    // 3. Baca Data Permohonan Secara Realtime
+    const applicationsRef = ref(db, 'applications');
+    onValue(applicationsRef, (snapshot) => {
+      tableBody.innerHTML = '';
+      const data = snapshot.val();
+
+      if (!data) {
+        tableBody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-400">Tiada rekod permohonan ditemui.</td></tr>`;
+        pendingCountEl.textContent = '0';
+        return;
+      }
+
+      let pendingCount = 0;
+      const items = Object.keys(data).map(key => ({ id: key, ...data[key] }));
+      
+      // Susun mengikut tarikh cipta terkini
+      items.reverse();
+
+      items.forEach((item) => {
+        if (item.status === 'Pending') pendingCount++;
+
+        let statusBadge = `<span class="bg-amber-100 text-amber-700 font-medium px-2 py-0.5 rounded-full text-[10px]">Menunggu</span>`;
+        if (item.status === 'Approved') {
+          statusBadge = `<span class="bg-emerald-100 text-emerald-700 font-medium px-2 py-0.5 rounded-full text-[10px]">Diluluskan</span>`;
+        } else if (item.status === 'Rejected') {
+          statusBadge = `<span class="bg-red-100 text-red-700 font-medium px-2 py-0.5 rounded-full text-[10px]">Ditolak</span>`;
+        }
+
+        const row = `
+          <tr class="hover:bg-slate-50 transition">
+            <td class="py-3 px-3">
+              <div class="font-bold text-slate-800">${item.applicant_name}</div>
+              <div class="text-[11px] text-slate-400">${item.department}</div>
+            </td>
+            <td class="py-3 px-3">
+              <div class="font-medium text-slate-700">${item.purpose}</div>
+              <div class="text-[11px] text-blue-600"><i class="fa-solid fa-location-dot"></i> ${item.destination}</div>
+            </td>
+            <td class="py-3 px-3 whitespace-nowrap">
+              <div>${item.start_date}</div>
+              <div class="text-[11px] text-slate-400">${item.start_time}</div>
+            </td>
+            <td class="py-3 px-3 font-medium text-slate-700">${item.vehicle_type}</td>
+            <td class="py-3 px-3">${statusBadge}</td>
+          </tr>
+        `;
+        tableBody.innerHTML += row;
+      });
+
+      pendingCountEl.textContent = pendingCount;
+    });
   </script>
 </body>
 </html>
