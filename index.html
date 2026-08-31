@@ -1,0 +1,163 @@
+{
+  "users": {
+    "user_101": {
+      "ic_number": "850101125555",
+      "full_name": "Sabri bin Sariol",
+      "role": "Ketua Pemandu",
+      "grade": "H14",
+      "phone": "0138901234",
+      "avatar_url": "https://example.com/avatar1.jpg",
+      "status": "active"
+    },
+    "user_102": {
+      "ic_number": "920304126666",
+      "full_name": "Mahadi bin Konto",
+      "role": "Pemandu Kenderaan",
+      "grade": "H11",
+      "phone": "0112345678",
+      "avatar_url": "",
+      "status": "active"
+    }
+  },
+  "applications": {
+    "PERM-2026-001": {
+      "applicant_id": "user_101",
+      "applicant_name": "Sabri bin Sariol",
+      "department": "Unit Kecemasan",
+      "destination": "Kota Kinabalu",
+      "purpose": "Pengangkutan Pesakit Rujukan",
+      "start_date": "2026-09-01",
+      "start_time": "08:00",
+      "end_date": "2026-09-02",
+      "end_time": "17:00",
+      "passengers_count": 2,
+      "status": "Pending",
+      "assigned_driver_id": "user_102",
+      "assigned_vehicle_id": "veh_01",
+      "created_at": "2026-08-31T20:41:29Z"
+    }
+  },
+  "vehicles": {
+    "veh_01": {
+      "plate_number": "SAB 1234 A",
+      "model": "Toyota Commuter",
+      "type": "Ambulans",
+      "capacity": 4,
+      "status": "Available",
+      "photo_url": "https://example.com/toyota_commuter.jpg",
+      "last_service_date": "2026-07-15"
+    },
+    "veh_02": {
+      "plate_number": "SAB 5678 B",
+      "model": "Nissan Navara 4x4",
+      "type": "Pengerak Sektor / Logistik",
+      "capacity": 5,
+      "status": "In Use",
+      "photo_url": "https://example.com/navara.jpg",
+      "last_service_date": "2026-08-01"
+    }
+  },
+  "drivers": {
+    "user_101": {
+      "license_type": "D, E",
+      "duty_status": "On Duty",
+      "current_vehicle_id": ""
+    },
+    "user_102": {
+      "license_type": "D, E",
+      "duty_status": "On Trip",
+      "current_vehicle_id": "veh_01"
+    }
+  },
+  "system_settings": {
+    "app_title": "Unit Angkut Hospital Semporna",
+    "theme": {
+      "mode": "light",
+      "primary_color": "#1657c9",
+      "bg_color": "#eef2f7"
+    }<!-- Import Firebase SDK -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
+  import { getDatabase, ref, set, get, push, onValue, update } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
+
+  // Konfigurasi Projek Firebase Anda
+  const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+    databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_PROJECT_ID.appspot.com",
+    messagingSenderId: "YOUR_SENDER_ID",
+    appId: "YOUR_APP_ID"
+  };
+
+  // Inisialisasi Firebase
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  // --- FUNSI-FUNGSI UTAMA ---
+
+  // 1. Simpan Permohonan Kenderaan Baru
+  function hantarPermohonan(dataPermohonan) {
+    const permRef = ref(db, 'applications');
+    const newPermRef = push(permRef);
+    
+    set(newPermRef, {
+      ...dataPermohonan,
+      status: "Pending",
+      created_at: new Date().toISOString()
+    }).then(() => {
+      alert("Permohonan berjaya dihantar!");
+    }).catch((error) => {
+      console.error("Ralat menghantar permohonan:", error);
+    });
+  }
+
+  // 2. Papar Senarai Permohonan Secara Masa-Nyata (Realtime)
+  function dengarPermohonan() {
+    const listRef = ref(db, 'applications');
+    onValue(listRef, (snapshot) => {
+      const data = snapshot.val();
+      console.log("Data Permohonan Terkini:", data);
+      // Di sini anda boleh masukkan fungsi untuk kemaskini UI (.perm-card)
+    });
+  }
+
+  // 3. Kemaskini Status Permohonan (Kelulusan / Penolakan)
+  function kemaskiniStatusPermohonan(idPermohonan, statusBaru) {
+    const appRef = ref(db, `applications/${idPermohonan}`);
+    update(appRef, {
+      status: statusBaru
+    });
+  }
+
+  // 4. Membaca Senarai Kenderaan
+  function dapatkanSenaraiKenderaan() {
+    const vehRef = ref(db, 'vehicles');
+    get(vehRef).then((snapshot) => {
+      if (snapshot.exists()) {
+        console.log("Senarai Kenderaan:", snapshot.val());
+      }
+    });
+  }
+
+  // Jalankan pemerhatian data apabila halaman dimuatkan
+  window.addEventListener('DOMContentLoaded', () => {
+    dengarPermohonan();
+  });
+</script>
+  }
+}{
+  "rules": {
+    ".read": "auth != null",
+    ".write": "auth != null",
+    "applications": {
+      ".read": true,
+      ".write": true
+    },
+    "vehicles": {
+      ".read": true,
+      ".write": "auth != null"
+    }
+  }
+}
